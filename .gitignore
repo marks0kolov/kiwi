@@ -1,0 +1,12 @@
+# programming
+__pycache__/
+test.*
+test/
+.venv/
+tmp/
+.env
+# macOS
+.DS_store
+.AppleDouble
+# IDE
+.vscode/
