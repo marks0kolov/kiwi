@@ -5,6 +5,7 @@ load_dotenv()
 
 # per-bot settings
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = 1316245085
 
 # secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

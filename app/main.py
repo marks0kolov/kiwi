@@ -13,7 +13,7 @@ from app.ai import (
     ask,
     create_system_prompt,
 )
-from app.config import BOT_TOKEN
+from app.config import BOT_TOKEN, ADMIN_ID
 from app.db.models import MessageType
 from app.db.repo import (
     create_conversation,
@@ -84,8 +84,8 @@ async def execute_actions(
             sec_to_wait = 0.5
         
         if i < (len(actions) - 1):
-            sec_to_wait = random.randint(max(sec_to_wait - 0.5, 0), sec_to_wait + 0.5)
-            asyncio.sleep(sec_to_wait)
+            sec_to_wait = random.uniform(max(sec_to_wait - 0.5, 0), sec_to_wait + 0.5)
+            await asyncio.sleep(sec_to_wait)
 
 
 
@@ -159,6 +159,7 @@ async def main() -> None:
 
     try:
         await dp.start_polling(bot)
+        await bot.send_message(ADMIN_ID, "✅ bot started")
     finally:
         await engine.dispose()
 
