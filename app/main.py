@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import CommandStart
 from aiogram import types as ttypes
 
-from config import BOT_TOKEN
+from app.config import BOT_TOKEN
 from app.ai import ask
 from app.db.repo import (
     create_conversation,
