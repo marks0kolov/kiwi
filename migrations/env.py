@@ -13,15 +13,15 @@ from app.db.models import Base
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name) # read logging config for file
+    fileConfig(config.config_file_name)  # read logging config for file
 
 
 config.set_main_option(
     "sqlalchemy.url",
     str(DATABASE_URL).replace("%", "%%"),
-) # override database url
+)  # override database url
 
-target_metadata = Base.metadata # read desired schema
+target_metadata = Base.metadata  # read desired schema
 
 
 def run_migrations_offline() -> None:

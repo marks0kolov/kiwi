@@ -11,9 +11,13 @@ from app.db.models import (
 async def create_conversation(
     session: AsyncSession,
     user_id: int,
+    system_prompt: str
 ) -> Conversation:
     "Create a new conversation"
-    conversation = Conversation(user_id=user_id)
+    conversation = Conversation(
+        user_id=user_id,
+        system_prompt=system_prompt
+    )
 
     session.add(conversation)
     await session.flush()

@@ -51,6 +51,11 @@ class Conversation(Base):
         index=True,
     )
 
+    system_prompt: Mapped[Text] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -60,11 +65,6 @@ class Conversation(Base):
     messages: Mapped[list["Message"]] = relationship(
         back_populates="conversation",
         cascade="all, delete-orphan",
-    )
-
-    system_prompt: Mapped[Text] = mapped_column(
-        Text,
-        nullable=False,
     )
 
 

@@ -14,3 +14,4 @@ DATABASE_URL = DATABASE_URL.replace(
     "postgresql+psycopg://",
     1,
 )
+GEMINI_MODEL = "gemini-3.5-flash"
