@@ -55,15 +55,20 @@ async def execute_actions(
     actions: list[KiwiAction],
 ) -> None:
     """Execute either sending or reacting to a user's message"""
-    for action in actions:
+    for i, action in enumerate(actions):
         if isinstance(action, SendAction):
+            # send and log message
             sent_message = await message.answer(action.message)
             await save_kiwi_action(
                 conversation_id,
                 action,
                 sent_message.message_id,
             )
+            # get wait time
+            sec_to_wait = len(action.message) / 6
+        
         elif isinstance(action, ReactAction):
+            # send and log reaction
             await message.bot.set_message_reaction(
                 chat_id=message.chat.id,
                 message_id=action.message_id,
@@ -74,6 +79,14 @@ async def execute_actions(
                 action,
                 action.message_id,
             )
+
+            # get wait time
+            sec_to_wait = 0.5
+        
+        if i < (len(actions) - 1):
+            sec_to_wait = random.randint(max(sec_to_wait - 0.5, 0), sec_to_wait + 0.5)
+            asyncio.sleep(sec_to_wait)
+
 
 
 @router.message(CommandStart())
