@@ -7,7 +7,7 @@ from app.config import GEMINI_API_KEY
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-PROMPTS = Path(__file__).with_name("prompts")
+PROMPTS = Path(__file__).with_name("assets") / "prompts"
 BASE_PROMPT = (PROMPTS / "base_system_prompt.xml").read_text()
 GROUP_PROMPT = (PROMPTS / "group_addition.xml").read_text()
 
