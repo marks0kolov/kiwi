@@ -14,5 +14,5 @@ DATABASE_URL = DATABASE_URL.replace(
     "postgresql+psycopg://",
     1,
 )
-GEMINI_MODEL = "gemini-3.1-flash-lite"
-GEMINI_THINKING_LEVEL = "low"
+GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_THINKING_LEVEL = "minimal"
