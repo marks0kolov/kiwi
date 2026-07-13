@@ -180,7 +180,11 @@ async def ask(
         input=render_conversation(messages),
         system_instruction=system_prompt,
         tools=TOOLS,
-        generation_config={"tool_choice": "any"},
+        generation_config={
+            "tool_choice": "any",
+            "thinking_level": "minimal"
+        },
         store=False,
+        
     )
     return parse_actions(interaction)  # return kiwi's actions parsed by func

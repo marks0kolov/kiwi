@@ -21,8 +21,6 @@ from app.db.repo import (
 )
 from app.db.session import Session, engine
 
-TOKEN = BOT_TOKEN
-
 router = Router()
 
 
@@ -141,7 +139,7 @@ async def message_handler(
 
 
 async def main() -> None:
-    bot = Bot(token=TOKEN)
+    bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(router)
 
