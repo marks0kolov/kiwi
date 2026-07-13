@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import CommandStart

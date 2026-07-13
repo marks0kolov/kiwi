@@ -5,7 +5,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 
 from google import genai
 
-from app.config import GEMINI_API_KEY, GEMINI_MODEL
+from app.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_THINKING_LEVEL
 from app.db.models import Conversation, Message, MessageType
 from app.db.repo import create_message, get_messages
 from app.db.session import Session
@@ -182,7 +182,7 @@ async def ask(
         tools=TOOLS,
         generation_config={
             "tool_choice": "any",
-            "thinking_level": "minimal"
+            "thinking_level": GEMINI_THINKING_LEVEL
         },
         store=False,
         
