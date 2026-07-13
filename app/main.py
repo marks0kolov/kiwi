@@ -3,6 +3,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import CommandStart
 from aiogram import types as ttypes
+from aiogram.utils.chat_action import ChatActionSender
 
 from app.ai import (
     KiwiAction,
@@ -93,15 +94,19 @@ async def start_handler(
         )
         conversation_id = conversation.id
 
-    actions = await ask(
-        conversation_id=conversation_id,
-        message_type=MessageType.USER_ACTION,
-        content=(
-            "The user started their first conversation with you. Greet them and be friendly!"
-            if is_first_conversation
-            else "The user started a new conversation with you, erasing the previous context."
-        ),
-    )
+    async with ChatActionSender.typing(
+        bot=message.bot,
+        chat_id=message.chat.id,
+    ):
+        actions = await ask(
+            conversation_id=conversation_id,
+            message_type=MessageType.USER_ACTION,
+            content=(
+                "The user started their first conversation with you. Greet them and be friendly!"
+                if is_first_conversation
+                else "The user started a new conversation with you, erasing the previous context."
+            ),
+        )
     await execute_actions(message, conversation_id, actions)
 
 
@@ -122,12 +127,16 @@ async def message_handler(
             )
         conversation_id = conversation.id
 
-    actions = await ask(
-        conversation_id=conversation_id,
-        message_type=MessageType.USER_MESSAGE,
-        content=message.text,
-        message_id=message.message_id,
-    )
+    async with ChatActionSender.typing(
+        bot=message.bot,
+        chat_id=message.chat.id,
+    ):
+        actions = await ask(
+            conversation_id=conversation_id,
+            message_type=MessageType.USER_MESSAGE,
+            content=message.text,
+            message_id=message.message_id,
+        )
     await execute_actions(message, conversation_id, actions)
 
 
