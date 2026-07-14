@@ -1,5 +1,6 @@
 import asyncio
 import random
+from datetime import datetime, timezone
 
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import CommandStart
@@ -28,7 +29,9 @@ router = Router()
 async def save_kiwi_action(
     conversation_id: int,
     action: KiwiAction,
-    message_id: int,
+    message_id: int | None,
+    sent_at: datetime,
+    context: dict[str, object] | None = None,
 ) -> None:
     """Save an action kiwi did into the database"""
     async with Session.begin() as session:
@@ -46,6 +49,8 @@ async def save_kiwi_action(
                 else action.reaction
             ),
             message_id=message_id,
+            sent_at=sent_at,
+            context=context,
         )
 
 
@@ -63,10 +68,11 @@ async def execute_actions(
                 conversation_id,
                 action,
                 sent_message.message_id,
+                sent_message.date,
             )
             # get wait time
-            sec_to_wait = len(action.message) / 6
-        
+            sec_to_wait = len(action.message) / 7
+
         elif isinstance(action, ReactAction):
             # send and log reaction
             await message.bot.set_message_reaction(
@@ -77,16 +83,20 @@ async def execute_actions(
             await save_kiwi_action(
                 conversation_id,
                 action,
-                action.message_id,
+                None,
+                datetime.now(timezone.utc),
+                {"to_id": action.message_id},
             )
 
             # get wait time
             sec_to_wait = 0.5
-        
-        if i < (len(actions) - 1):
-            sec_to_wait = random.uniform(max(sec_to_wait - 0.5, 0), sec_to_wait + 0.5)
-            await asyncio.sleep(sec_to_wait)
 
+        if i < (len(actions) - 1):
+            sec_to_wait = random.uniform(
+                max(sec_to_wait - 0.5, 0),
+                min(sec_to_wait + 0.5, 2.5)
+            )
+            await asyncio.sleep(sec_to_wait)
 
 
 @router.message(CommandStart())
@@ -94,6 +104,12 @@ async def start_handler(
     message: ttypes.Message,
 ) -> None:
     """Create a new conversation for user"""
+    username = (
+        f"@{message.from_user.username}"
+        if message.from_user.username
+        else f"{message.from_user.first_name} {message.from_user.last_name or ''}".strip()
+    )
+
     async with Session.begin() as session:
         is_first_conversation = await get_current_conversation(
             session=session,
@@ -102,7 +118,10 @@ async def start_handler(
         conversation = await create_conversation(
             session=session,
             user_id=message.from_user.id,
-            system_prompt=create_system_prompt("private"),
+            system_prompt=create_system_prompt(
+                mode="private",
+                username=username,
+            ),
         )
         conversation_id = conversation.id
 
@@ -114,10 +133,11 @@ async def start_handler(
             conversation_id=conversation_id,
             message_type=MessageType.USER_ACTION,
             content=(
-                "The user started their first conversation with you. Greet them and be friendly!"
+                "The user started their first conversation with you. Introduce yourself shortly  and greet them!"
                 if is_first_conversation
-                else "The user started a new conversation with you, erasing the previous context."
+                else "The user started a new conversation with you, erasing the previous context. Greet them!"
             ),
+            sent_at=message.date,
         )
     await execute_actions(message, conversation_id, actions)
 
@@ -126,6 +146,13 @@ async def start_handler(
 async def message_handler(
     message: ttypes.Message,
 ) -> None:
+    username = (
+        f"@{message.from_user.username}"
+        if message.from_user.username
+        else f"{message.from_user.first_name} {message.from_user.last_name or ''}".strip()
+    )
+
+    # get current conversation
     async with Session.begin() as session:
         conversation = await get_current_conversation(
             session=session,
@@ -135,21 +162,35 @@ async def message_handler(
             conversation = await create_conversation(
                 session=session,
                 user_id=message.from_user.id,
-                system_prompt=create_system_prompt("private"),
+                system_prompt=create_system_prompt(
+                    mode="private",
+                    username=username,
+                ),
             )
         conversation_id = conversation.id
 
     async with ChatActionSender.typing(
         bot=message.bot,
         chat_id=message.chat.id,
-    ):
+    ):  # use the "typing..." indicator
         actions = await ask(
             conversation_id=conversation_id,
             message_type=MessageType.USER_MESSAGE,
             content=message.text,
             message_id=message.message_id,
-        )
-    await execute_actions(message, conversation_id, actions)
+            sent_at=message.date,
+            context=(
+                {"reply_to": message.reply_to_message.message_id}
+                if message.reply_to_message is not None
+                else None
+            ),
+        )  # get AI's response
+
+        await execute_actions(
+            message,
+            conversation_id,
+            actions,
+        )  # execute the actions provided by the AI
 
 
 async def main() -> None:

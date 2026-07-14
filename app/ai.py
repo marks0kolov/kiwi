@@ -1,5 +1,7 @@
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement, tostring
 
@@ -17,6 +19,7 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 PROMPTS = Path(__file__).with_name("assets") / "prompts"
 BASE_PROMPT = (PROMPTS / "base_system_prompt.xml").read_text()
 GROUP_PROMPT = (PROMPTS / "group_addition.xml").read_text()
+USER_INFO_PROMPT = (PROMPTS / "user_info.xml").read_text()
 
 # formatting ai input and output
 TOOLS = [
@@ -59,7 +62,28 @@ MESSAGE_TAGS = {
     MessageType.USER_REACTION: "user_reaction",
     MessageType.KIWI_MESSAGE: "kiwi_message",
     MessageType.KIWI_REACTION: "kiwi_reaction",
-}
+}  # message tags for each message type
+
+MESSAGE_ID_TYPES = {
+    MessageType.USER_MESSAGE,
+    MessageType.KIWI_MESSAGE,
+}  # message types that get their own IDs
+
+TIMESTAMP_ATTRIBUTES = {
+    MessageType.SYSTEM_MESSAGE: "sent_at",
+    MessageType.USER_MESSAGE: "sent_at",
+    MessageType.USER_ACTION: "done_at",
+    MessageType.USER_REACTION: "sent_at",
+    MessageType.KIWI_MESSAGE: "sent_at",
+    MessageType.KIWI_REACTION: "sent_at",
+}  # map timestampts for each action to XML attributes
+
+CONTEXT_ATTRIBUTES = {
+    MessageType.USER_MESSAGE: ("reply_to",),
+    MessageType.USER_REACTION: ("to_id",),
+    MessageType.KIWI_REACTION: ("to_id",),
+    MessageType.TOOL_RESPONSE: ("tools", "to_tool"),
+}  # context attrbiutes for each type
 
 
 # classes to use in parsing actions
@@ -81,9 +105,20 @@ class InvalidAIResponse(ValueError):
     pass
 
 
-def create_system_prompt(mode: str) -> str:
-    """Create a system prompt for kiwi with group addition if needed"""
-    return BASE_PROMPT + (f"\n{GROUP_PROMPT}" if mode == "group" else "")
+def create_system_prompt(
+    *,
+    mode: str,
+    username: str
+) -> str:
+    """Create a system prompt for kiwi with user info and group addition if needed"""
+    prompt = BASE_PROMPT
+
+    if username:
+        prompt += f"\n{USER_INFO_PROMPT.format(username)}"
+    if mode == "group":
+        prompt += f"\n{GROUP_PROMPT}"
+
+    return prompt
 
 
 def render_conversation(messages: list[Message]) -> str:
@@ -92,16 +127,29 @@ def render_conversation(messages: list[Message]) -> str:
 
     for message in messages:
         node = SubElement(root, MESSAGE_TAGS[message.message_type])
-        if message.message_id is not None:
-            attribute = (
-                "to_id"
-                if message.message_type in {
-                    MessageType.USER_REACTION,
-                    MessageType.KIWI_REACTION,
-                }
-                else "id"
+        if (
+            message.message_id is not None
+            and message.message_type in MESSAGE_ID_TYPES
+        ):
+            node.set("id", str(message.message_id))
+
+        timestamp_attribute = TIMESTAMP_ATTRIBUTES.get(message.message_type)
+        if timestamp_attribute is not None:
+            node.set(timestamp_attribute, message.sent_at.isoformat())
+
+        for attribute in CONTEXT_ATTRIBUTES.get(message.message_type, ()):
+            value = message.context.get(attribute)
+            if value is None:
+                continue
+            node.set(
+                attribute,
+                (
+                    value
+                    if isinstance(value, str)
+                    else json.dumps(value, ensure_ascii=False)
+                ),
             )
-            node.set(attribute, str(message.message_id))
+
         node.text = message.content
 
     return tostring(root, encoding="unicode")
@@ -155,6 +203,8 @@ async def ask(
     message_type: MessageType,
     content: str,
     message_id: int | None = None,
+    sent_at: datetime | None = None,
+    context: dict[str, object] | None = None,
 ) -> list[KiwiAction]:
     """Persist an incoming event and return kiwi's actions"""
     async with Session.begin() as session:
@@ -170,6 +220,8 @@ async def ask(
             message_type=message_type,
             content=content,
             message_id=message_id,
+            sent_at=sent_at,
+            context=context,
         )
         messages = await get_messages(session, conversation_id)
         system_prompt = conversation.system_prompt

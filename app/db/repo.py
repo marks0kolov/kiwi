@@ -1,4 +1,6 @@
-from sqlalchemy import delete, select, update
+from datetime import datetime
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
@@ -48,6 +50,8 @@ async def create_message(
     message_type: MessageType,
     content: str,
     message_id: int | None = None,
+    sent_at: datetime | None = None,
+    context: dict[str, object] | None = None,
 ) -> Message:
     "Create a message"
     message = Message(
@@ -55,6 +59,8 @@ async def create_message(
         message_id=message_id,
         message_type=message_type,
         content=content,
+        context=context or {},
+        **({"sent_at": sent_at} if sent_at is not None else {}),
     )
 
     session.add(message)
