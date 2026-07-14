@@ -1,13 +1,32 @@
 from datetime import datetime
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
     Conversation,
     Message,
     MessageType,
+    User,
 )
+
+
+async def upsert_user(
+    session: AsyncSession,
+    user_id: int,
+    username: str | None,
+) -> None:
+    "Create a user or refresh their mutable Telegram username"
+    statement = insert(User).values(
+        user_id=user_id,
+        username=username,
+    )
+    statement = statement.on_conflict_do_update(
+        index_elements=[User.user_id],
+        set_={"username": statement.excluded.username},
+    )
+    await session.execute(statement)
 
 
 async def create_conversation(

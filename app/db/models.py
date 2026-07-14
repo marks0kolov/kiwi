@@ -38,6 +38,32 @@ class MessageType(enum.Enum):
     KIWI_REACTION = enum.auto()
 
 
+class User(Base):
+    "Table storing Telegram users known to kiwi"
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
+        autoincrement=False,
+    )
+
+    username: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    conversations: Mapped[list["Conversation"]] = relationship(
+        back_populates="user",
+    )
+
+
 class Conversation(Base):
     "Table storing all conversations each user had with kiwi"
     __tablename__ = "conversations"
@@ -48,7 +74,7 @@ class Conversation(Base):
     )
 
     user_id: Mapped[int] = mapped_column(
-        BigInteger,
+        ForeignKey("users.user_id"),
         nullable=False,
         index=True,
     )
@@ -67,6 +93,10 @@ class Conversation(Base):
     messages: Mapped[list["Message"]] = relationship(
         back_populates="conversation",
         cascade="all, delete-orphan",
+    )
+
+    user: Mapped[User] = relationship(
+        back_populates="conversations",
     )
 
 

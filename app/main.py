@@ -20,6 +20,7 @@ from app.db.repo import (
     create_conversation,
     create_message,
     get_current_conversation,
+    upsert_user,
 )
 from app.db.session import Session, engine
 
@@ -111,6 +112,11 @@ async def start_handler(
     )
 
     async with Session.begin() as session:
+        await upsert_user(
+            session=session,
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+        )
         is_first_conversation = await get_current_conversation(
             session=session,
             user_id=message.from_user.id,
@@ -154,6 +160,11 @@ async def message_handler(
 
     # get current conversation
     async with Session.begin() as session:
+        await upsert_user(
+            session=session,
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+        )
         conversation = await get_current_conversation(
             session=session,
             user_id=message.from_user.id,
