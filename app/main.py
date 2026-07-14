@@ -94,7 +94,7 @@ async def execute_actions(
         if i < (len(actions) - 1):
             sec_to_wait = random.uniform(
                 max(sec_to_wait - 0.5, 0),
-                min(sec_to_wait + 0.5, 2.5)
+                max(sec_to_wait + 0.5, 2.5)
             )
             await asyncio.sleep(sec_to_wait)
 
