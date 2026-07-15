@@ -32,7 +32,6 @@ class MessageType(enum.Enum):
 
     USER_MESSAGE = enum.auto()
     USER_ACTION = enum.auto()
-    USER_REACTION = enum.auto()
 
     KIWI_MESSAGE = enum.auto()
     KIWI_REACTION = enum.auto()

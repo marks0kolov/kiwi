@@ -59,7 +59,6 @@ MESSAGE_TAGS = {
     MessageType.TOOL_RESPONSE: "tool_response",
     MessageType.USER_MESSAGE: "user_message",
     MessageType.USER_ACTION: "user_action",
-    MessageType.USER_REACTION: "user_reaction",
     MessageType.KIWI_MESSAGE: "kiwi_message",
     MessageType.KIWI_REACTION: "kiwi_reaction",
 }  # message tags for each message type
@@ -73,14 +72,12 @@ TIMESTAMP_ATTRIBUTES = {
     MessageType.SYSTEM_MESSAGE: "sent_at",
     MessageType.USER_MESSAGE: "sent_at",
     MessageType.USER_ACTION: "done_at",
-    MessageType.USER_REACTION: "sent_at",
     MessageType.KIWI_MESSAGE: "sent_at",
     MessageType.KIWI_REACTION: "sent_at",
 }  # map timestampts for each action to XML attributes
 
 CONTEXT_ATTRIBUTES = {
     MessageType.USER_MESSAGE: ("reply_to",),
-    MessageType.USER_REACTION: ("to_id",),
     MessageType.KIWI_REACTION: ("to_id",),
     MessageType.TOOL_RESPONSE: ("tools", "to_tool"),
 }  # context attrbiutes for each type
