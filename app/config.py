@@ -17,5 +17,5 @@ DATABASE_URL = DATABASE_URL.replace(
 )
 
 # gemini settings
-GEMINI_MODEL = "gemini-3.5-flash"
-GEMINI_THINKING_LEVEL = "minimal"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+GEMINI_THINKING_LEVEL = "low"
